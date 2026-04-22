@@ -206,6 +206,29 @@
     </div>
 </div>
 
+<div class="modal-overlay" id="confirm-modal" hidden>
+    <div class="modal-window modal-window-confirm">
+        <div class="modal-header">
+            <h3 id="confirm-title">Подтверждение</h3>
+            <button class="modal-close-button" type="button" data-close-modal="confirm-modal" aria-label="Закрыть">
+                <svg class="icon-close" viewBox="0 0 24 24" fill="none">
+                    <path d="M8 8L16 16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
+                    <path d="M16 8L8 16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
+                </svg>
+            </button>
+        </div>
+
+        <div class="modal-form">
+            <p id="confirm-message" class="confirm-message">Ты уверен?</p>
+
+            <div class="modal-actions">
+                <button class="tile-button tile-button-danger" id="confirm-accept-button" type="button">Удалить</button>
+                <button class="tile-button" id="confirm-cancel-button" type="button">Отмена</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script src="app.js"></script>
 </body>
 </html>

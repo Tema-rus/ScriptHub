@@ -140,12 +140,11 @@ body::before {
     font: inherit;
     font-size: 0.88rem;
     cursor: pointer;
-    transition:
-        transform var(--transition-fast),
-        background-color var(--transition-fast),
-        border-color var(--transition-fast),
-        color var(--transition-fast),
-        box-shadow var(--transition-fast);
+    transition: transform var(--transition-fast),
+    background-color var(--transition-fast),
+    border-color var(--transition-fast),
+    color var(--transition-fast),
+    box-shadow var(--transition-fast);
 }
 
 .library-filter-button:hover {
@@ -156,8 +155,7 @@ body::before {
 }
 
 .library-filter-button.is-active {
-    background:
-        linear-gradient(135deg, rgba(124, 140, 255, 0.22), rgba(158, 216, 255, 0.14));
+    background: linear-gradient(135deg, rgba(124, 140, 255, 0.22), rgba(158, 216, 255, 0.14));
     border-color: rgba(124, 140, 255, 0.34);
     color: var(--text);
     box-shadow: 0 0 0 4px rgba(124, 140, 255, 0.08);
@@ -396,13 +394,12 @@ body::before {
 
 .library-scroll::-webkit-scrollbar-thumb,
 .modal-window::-webkit-scrollbar-thumb {
-    background:
-        linear-gradient(
+    background: linear-gradient(
             180deg,
             rgba(207, 213, 255, 0.65),
             rgba(124, 140, 255, 0.75),
             rgba(158, 216, 255, 0.65)
-        );
+    );
     border: 2px solid transparent;
     background-clip: padding-box;
     border-radius: 999px;
@@ -410,13 +407,12 @@ body::before {
 
 .library-scroll::-webkit-scrollbar-thumb:hover,
 .modal-window::-webkit-scrollbar-thumb:hover {
-    background:
-        linear-gradient(
+    background: linear-gradient(
             180deg,
             rgba(207, 213, 255, 0.8),
             rgba(124, 140, 255, 0.9),
             rgba(158, 216, 255, 0.8)
-        );
+    );
     border: 2px solid transparent;
     background-clip: padding-box;
 }
@@ -653,12 +649,10 @@ body::before {
     padding: 24px;
     border: 1px solid rgba(255, 255, 255, 0.14);
     border-radius: 28px;
-    background:
-        linear-gradient(160deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.04)),
-        rgba(7, 8, 12, 0.82);
-    box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.14),
-        0 30px 80px rgba(0, 0, 0, 0.42);
+    background: linear-gradient(160deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.04)),
+    rgba(7, 8, 12, 0.82);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    0 30px 80px rgba(0, 0, 0, 0.42);
     backdrop-filter: blur(26px) saturate(140%);
     overscroll-behavior: contain;
 }
@@ -752,6 +746,147 @@ body::before {
     margin-top: 6px;
 }
 
+.toast-container {
+    position: fixed;
+    top: 18px;
+    right: 18px;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: min(360px, calc(100vw - 32px));
+    pointer-events: none;
+}
+
+.toast {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 16px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 20px;
+    background: linear-gradient(160deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.04)),
+    rgba(7, 8, 12, 0.82);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 16px 40px rgba(0, 0, 0, 0.34);
+    backdrop-filter: blur(22px) saturate(140%);
+    color: var(--text);
+    pointer-events: auto;
+    opacity: 0;
+    transform: translateY(-8px) scale(0.985);
+    transition: opacity 180ms ease,
+    transform 180ms ease,
+    border-color var(--transition-fast),
+    background-color var(--transition-fast);
+}
+
+.toast.is-visible {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}
+
+.toast.is-removing {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.985);
+}
+
+.toast::before {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    pointer-events: none;
+    opacity: 0.16;
+}
+
+.toast--info::before {
+    background: linear-gradient(135deg, rgba(158, 216, 255, 0.6), rgba(124, 140, 255, 0.5));
+}
+
+.toast--success::before {
+    background: linear-gradient(135deg, rgba(110, 255, 186, 0.55), rgba(124, 140, 255, 0.35));
+}
+
+.toast--error::before {
+    background: linear-gradient(135deg, rgba(255, 110, 110, 0.6), rgba(255, 150, 150, 0.35));
+}
+
+.toast-icon {
+    position: relative;
+    z-index: 1;
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+    margin-top: 1px;
+    color: var(--text);
+    opacity: 0.9;
+}
+
+.toast-body {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.toast-title {
+    font-size: 0.92rem;
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+.toast-message {
+    color: var(--muted);
+    font-size: 0.84rem;
+    line-height: 1.4;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.toast-close {
+    position: relative;
+    z-index: 1;
+    margin-left: auto;
+    flex-shrink: 0;
+    width: 30px;
+    height: 30px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform var(--transition-fast),
+    background-color var(--transition-fast),
+    border-color var(--transition-fast);
+}
+
+.toast-close:hover {
+    transform: translateY(-1px);
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(124, 140, 255, 0.28);
+}
+
+.toast-close .icon-close {
+    width: 14px;
+    height: 14px;
+}
+
+.modal-window-confirm {
+    width: min(420px, 100%);
+}
+
+.confirm-message {
+    margin: 0;
+    color: var(--muted);
+    line-height: 1.5;
+}
+
 @media (max-width: 980px) {
     .tile {
         grid-column: span 6;
@@ -759,6 +894,12 @@ body::before {
 }
 
 @media (max-width: 720px) {
+    .toast-container {
+        top: 12px;
+        right: 12px;
+        width: min(100%, calc(100vw - 24px));
+    }
+
     .shell {
         padding: 16px;
     }

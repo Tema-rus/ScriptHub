@@ -42,6 +42,12 @@ const dom = {
     wgCopyButton: document.getElementById("wg-copy-button"),
     wgPickButton: document.getElementById("wg-pick-button"),
     wgClearButton: document.getElementById("wg-clear-button"),
+
+    confirmModal: document.getElementById("confirm-modal"),
+    confirmTitle: document.getElementById("confirm-title"),
+    confirmMessage: document.getElementById("confirm-message"),
+    confirmAcceptButton: document.getElementById("confirm-accept-button"),
+    confirmCancelButton: document.getElementById("confirm-cancel-button"),
 };
 
 let toolsState = [];
@@ -50,6 +56,161 @@ const viewState = {
     activeFilter: "all",
     searchQuery: "",
 };
+
+const confirmState = {
+    onAccept: null,
+};
+
+let toastContainer = null;
+
+function openConfirm({
+                         title = "Подтверждение",
+                         message = "Ты уверен?",
+                         confirmText = "Подтвердить",
+                         onAccept = null,
+                     } = {}) {
+    confirmState.onAccept = onAccept;
+
+    if (dom.confirmTitle) {
+        dom.confirmTitle.textContent = title;
+    }
+
+    if (dom.confirmMessage) {
+        dom.confirmMessage.textContent = message;
+    }
+
+    if (dom.confirmAcceptButton) {
+        dom.confirmAcceptButton.textContent = confirmText;
+    }
+
+    openModal(dom.confirmModal);
+}
+
+function closeConfirm() {
+    confirmState.onAccept = null;
+    closeModal(dom.confirmModal);
+}
+
+function setupConfirmModal() {
+    dom.confirmCancelButton?.addEventListener("click", () => {
+        closeConfirm();
+    });
+
+    dom.confirmAcceptButton?.addEventListener("click", async () => {
+        const handler = confirmState.onAccept;
+        closeConfirm();
+
+        if (typeof handler === "function") {
+            await handler();
+        }
+    });
+
+    dom.confirmModal?.addEventListener("click", (event) => {
+        if (event.target === dom.confirmModal) {
+            closeConfirm();
+        }
+    });
+}
+
+function ensureToastContainer() {
+    if (toastContainer) {
+        return toastContainer;
+    }
+
+    toastContainer = document.createElement("div");
+    toastContainer.className = "toast-container";
+    toastContainer.id = "toast-container";
+    document.body.appendChild(toastContainer);
+
+    return toastContainer;
+}
+
+function getToastIcon(type) {
+    if (type === "success") {
+        return `
+            <svg class="toast-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M6.5 12.5L10 16L17.5 8.5" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"></path>
+            </svg>
+        `;
+    }
+
+    if (type === "error") {
+        return `
+            <svg class="toast-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M12 8V13" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"></path>
+                <circle cx="12" cy="16.5" r="1" fill="currentColor"></circle>
+                <path d="M10.3 4.8L3.9 16.2C3.2 17.4 4.1 19 5.5 19H18.5C19.9 19 20.8 17.4 20.1 16.2L13.7 4.8C13 3.6 11 3.6 10.3 4.8Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"></path>
+            </svg>
+        `;
+    }
+
+    return `
+        <svg class="toast-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.8"></circle>
+            <path d="M12 10V16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
+            <circle cx="12" cy="7.5" r="1" fill="currentColor"></circle>
+        </svg>
+    `;
+}
+
+function removeToast(toast) {
+    if (!toast || toast.dataset.removing === "true") {
+        return;
+    }
+
+    toast.dataset.removing = "true";
+    toast.classList.remove("is-visible");
+    toast.classList.add("is-removing");
+
+    setTimeout(() => {
+        toast.remove();
+    }, 180);
+}
+
+function showToast({
+                       title = "Уведомление",
+                       message = "",
+                       type = "info",
+                       duration = 3200,
+                   } = {}) {
+    const container = ensureToastContainer();
+
+    const toast = document.createElement("div");
+    toast.className = `toast toast--${type}`;
+
+    toast.innerHTML = `
+        ${getToastIcon(type)}
+
+        <div class="toast-body">
+            <div class="toast-title">${escapeHtml(title)}</div>
+            <div class="toast-message">${escapeHtml(message)}</div>
+        </div>
+
+        <button class="toast-close" type="button" aria-label="Закрыть уведомление">
+            <svg class="icon-close" viewBox="0 0 24 24" fill="none">
+                <path d="M8 8L16 16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
+                <path d="M16 8L8 16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
+            </svg>
+        </button>
+    `;
+
+    container.appendChild(toast);
+
+    requestAnimationFrame(() => {
+        toast.classList.add("is-visible");
+    });
+
+    const timeoutId = setTimeout(() => {
+        removeToast(toast);
+    }, duration);
+
+    toast.querySelector(".toast-close")?.addEventListener("click", () => {
+        clearTimeout(timeoutId);
+        removeToast(toast);
+    });
+
+    return toast;
+}
 
 function escapeHtml(value) {
     const entities = {
@@ -470,6 +631,11 @@ function setupGlobalHotkeys() {
             return;
         }
 
+        if (dom.confirmModal && !dom.confirmModal.hidden) {
+            closeConfirm();
+            return;
+        }
+
         if (dom.toolModal && !dom.toolModal.hidden) {
             closeModal(dom.toolModal);
             return;
@@ -517,7 +683,12 @@ async function handleTileAction(action, tool) {
         const result = await window.pywebview.api.run_tool(tool.id);
 
         if (!result?.ok && result?.mode !== "capture") {
-            alert(`Ошибка запуска:\n\n${result?.message ?? "Неизвестная ошибка"}`);
+            showToast({
+                title: "Ошибка запуска",
+                message: result?.message ?? "Неизвестная ошибка",
+                type: "error",
+                duration: 5000,
+            });
             return;
         }
 
@@ -525,16 +696,19 @@ async function handleTileAction(action, tool) {
             const output = result?.output?.trim();
 
             if (!result?.ok) {
-                alert(
-                    `Команда завершилась с ошибкой.\n\n` +
-                    `${result?.message ?? ""}\n\n` +
-                    `${output || "Вывод отсутствует."}`
-                );
+                showToast({
+                    title: "Команда завершилась с ошибкой",
+                    message: `${result?.message ?? ""}\n\n${output || "Вывод отсутствует."}`.trim(),
+                    type: "error",
+                    duration: 6000,
+                });
             } else {
-                alert(
-                    `${tool.name}\n\n` +
-                    `${output || "Команда выполнена, но ничего не вывела."}`
-                );
+                showToast({
+                    title: tool.name,
+                    message: output || "Команда выполнена, но ничего не вывела.",
+                    type: "success",
+                    duration: 5000,
+                });
             }
 
             const updatedTools = await window.pywebview.api.get_tools();
@@ -544,9 +718,21 @@ async function handleTileAction(action, tool) {
         }
 
         if (!result?.ok) {
-            alert(`Ошибка запуска:\n\n${result?.message ?? "Неизвестная ошибка"}`);
+            showToast({
+                title: "Ошибка запуска",
+                message: result?.message ?? "Неизвестная ошибка",
+                type: "error",
+                duration: 5000,
+            });
             return;
         }
+
+        showToast({
+            title: "Запущено",
+            message: tool.name,
+            type: "success",
+            duration: 2500,
+        });
 
         const updatedTools = await window.pywebview.api.get_tools();
         toolsState = Array.isArray(updatedTools) ? updatedTools : [];
@@ -558,8 +744,21 @@ async function handleTileAction(action, tool) {
         const result = await window.pywebview.api.open_tool_folder(tool.id);
 
         if (!result?.ok) {
-            alert(`Ошибка открытия папки:\n\n${result?.message ?? "Неизвестная ошибка"}`);
+            showToast({
+                title: "Ошибка открытия папки",
+                message: result?.message ?? "Неизвестная ошибка",
+                type: "error",
+                duration: 5000,
+            });
+            return;
         }
+
+        showToast({
+            title: "Папка открыта",
+            message: tool.name,
+            type: "info",
+            duration: 2200,
+        });
 
         return;
     }
@@ -628,7 +827,12 @@ function setupForms() {
         event.preventDefault();
 
         if (!window.pywebview?.api?.save_tool) {
-            alert("Python API для сохранения пока не подключён.");
+            showToast({
+                title: "Ошибка",
+                message: "Python API для сохранения пока не подключён.",
+                type: "error",
+                duration: 5000,
+            });
             return;
         }
 
@@ -636,12 +840,24 @@ function setupForms() {
         const result = await window.pywebview.api.save_tool(formData);
 
         if (!result?.ok) {
-            alert(`Ошибка сохранения:\n\n${result?.message ?? "Неизвестная ошибка"}`);
+            showToast({
+                title: "Ошибка сохранения",
+                message: result?.message ?? "Неизвестная ошибка",
+                type: "error",
+                duration: 5000,
+            });
             return;
         }
 
         closeModal(dom.toolModal);
         resetToolForm();
+
+        showToast({
+            title: "Сохранено",
+            message: result?.message ?? "Инструмент сохранён.",
+            type: "success",
+            duration: 2600,
+        });
 
         const updatedTools = await window.pywebview.api.get_tools();
         toolsState = Array.isArray(updatedTools) ? updatedTools : [];
@@ -655,34 +871,58 @@ function setupForms() {
             return;
         }
 
-        const confirmed = confirm("Удалить этот инструмент из ScriptHub?");
-        if (!confirmed) {
-            return;
-        }
+        openConfirm({
+            title: "Удаление инструмента",
+            message: "Удалить этот инструмент из ScriptHub?",
+            confirmText: "Удалить",
+            onAccept: async () => {
+                if (!window.pywebview?.api?.delete_tool) {
+                    showToast({
+                        title: "Ошибка",
+                        message: "Python API для удаления пока не подключён.",
+                        type: "error",
+                        duration: 5000,
+                    });
+                    return;
+                }
 
-        if (!window.pywebview?.api?.delete_tool) {
-            alert("Python API для удаления пока не подключён.");
-            return;
-        }
+                const result = await window.pywebview.api.delete_tool(toolId);
 
-        const result = await window.pywebview.api.delete_tool(toolId);
+                if (!result?.ok) {
+                    showToast({
+                        title: "Ошибка удаления",
+                        message: result?.message ?? "Неизвестная ошибка",
+                        type: "error",
+                        duration: 5000,
+                    });
+                    return;
+                }
 
-        if (!result?.ok) {
-            alert(`Ошибка удаления:\n\n${result?.message ?? "Неизвестная ошибка"}`);
-            return;
-        }
+                closeModal(dom.toolModal);
+                resetToolForm();
 
-        closeModal(dom.toolModal);
-        resetToolForm();
+                showToast({
+                    title: "Удалено",
+                    message: result?.message ?? "Инструмент удалён.",
+                    type: "success",
+                    duration: 2600,
+                });
 
-        const updatedTools = await window.pywebview.api.get_tools();
-        toolsState = Array.isArray(updatedTools) ? updatedTools : [];
-        applyFilters();
+                const updatedTools = await window.pywebview.api.get_tools();
+                toolsState = Array.isArray(updatedTools) ? updatedTools : [];
+                applyFilters();
+            },
+        });
     });
 
     dom.wgPickButton?.addEventListener("click", async () => {
         if (!window.pywebview?.api?.pick_wireguard_config) {
-            alert("Python API выбора файла пока не подключён.");
+            showToast({
+                title: "Ошибка",
+                message: "Python API выбора файла пока не подключён.",
+                type: "error",
+                duration: 5000,
+            });
             return;
         }
 
@@ -700,12 +940,22 @@ function setupForms() {
         const interfaceName = dom.wgInterfaceName?.value?.trim() || "Wireguard1";
 
         if (!configPath) {
-            alert("Укажи путь к конфигу.");
+            showToast({
+                title: "Не указан конфиг",
+                message: "Укажи путь к конфигу.",
+                type: "info",
+                duration: 3200,
+            });
             return;
         }
 
         if (!window.pywebview?.api?.generate_wireguard_command) {
-            alert("Python API генерации WG пока не подключён.");
+            showToast({
+                title: "Ошибка",
+                message: "Python API генерации WG пока не подключён.",
+                type: "error",
+                duration: 5000,
+            });
             return;
         }
 
@@ -715,17 +965,35 @@ function setupForms() {
         );
 
         if (!result?.ok) {
-            alert(`Ошибка генерации:\n\n${result?.message ?? "Неизвестная ошибка"}`);
+            showToast({
+                title: "Ошибка генерации",
+                message: result?.message ?? "Неизвестная ошибка",
+                type: "error",
+                duration: 5000,
+            });
             return;
         }
 
         dom.wgResult.value = result.command ?? "";
+
+        showToast({
+            title: "Команда сгенерирована",
+            message: interfaceName,
+            type: "success",
+            duration: 2400,
+        });
     });
 
     dom.wgCopyButton?.addEventListener("click", async () => {
         const text = dom.wgResult?.value?.trim();
 
         if (!text) {
+            showToast({
+                title: "Нечего копировать",
+                message: "Сначала сгенерируй команду.",
+                type: "info",
+                duration: 2800,
+            });
             return;
         }
 
@@ -733,17 +1001,43 @@ function setupForms() {
             const result = await window.pywebview.api.copy_text(text);
 
             if (!result?.ok) {
-                alert(`Не удалось скопировать текст:\n\n${result?.message ?? "Неизвестная ошибка"}`);
+                showToast({
+                    title: "Ошибка копирования",
+                    message: result?.message ?? "Неизвестная ошибка",
+                    type: "error",
+                    duration: 5000,
+                });
+                return;
             }
 
+            showToast({
+                title: "Скопировано",
+                message: "Команда WireGuard скопирована в буфер обмена.",
+                type: "success",
+                duration: 2400,
+            });
             return;
         }
 
         await navigator.clipboard.writeText(text);
+
+        showToast({
+            title: "Скопировано",
+            message: "Команда WireGuard скопирована в буфер обмена.",
+            type: "success",
+            duration: 2400,
+        });
     });
 
     dom.wgClearButton?.addEventListener("click", () => {
         resetWireGuardForm();
+
+        showToast({
+            title: "Очищено",
+            message: "Поля WireGuard сброшены.",
+            type: "info",
+            duration: 2000,
+        });
     });
 }
 
@@ -780,6 +1074,7 @@ async function loadTools() {
     }
 }
 
+setupConfirmModal();
 setupWindowControls();
 setupModals();
 setupTileActions();
