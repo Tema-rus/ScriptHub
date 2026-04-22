@@ -48,6 +48,8 @@ const dom = {
     confirmMessage: document.getElementById("confirm-message"),
     confirmAcceptButton: document.getElementById("confirm-accept-button"),
     confirmCancelButton: document.getElementById("confirm-cancel-button"),
+
+    autostartButton: document.getElementById("autostart-button"),
 };
 
 let toolsState = [];
@@ -57,11 +59,72 @@ const viewState = {
     searchQuery: "",
 };
 
+const appSettings = {
+    autostart: false,
+};
+
 const confirmState = {
     onAccept: null,
 };
 
 let toastContainer = null;
+
+function syncAutostartButton() {
+    if (!dom.autostartButton) {
+        return;
+    }
+
+    dom.autostartButton.textContent = `Автозапуск: ${appSettings.autostart ? "вкл" : "выкл"}`;
+    dom.autostartButton.classList.toggle("is-active", appSettings.autostart);
+}
+
+async function loadAppSettings() {
+    if (!window.pywebview?.api?.get_app_settings) {
+        return;
+    }
+
+    const settings = await window.pywebview.api.get_app_settings();
+    appSettings.autostart = Boolean(settings?.autostart);
+    syncAutostartButton();
+}
+
+function setupAutostart() {
+    dom.autostartButton?.addEventListener("click", async () => {
+        if (!window.pywebview?.api?.set_autostart) {
+            showToast({
+                title: "Ошибка",
+                message: "Python API автозапуска пока не подключён.",
+                type: "error",
+                duration: 5000,
+            });
+            return;
+        }
+
+        const result = await window.pywebview.api.set_autostart(!appSettings.autostart);
+
+        if (!result?.ok) {
+            showToast({
+                title: "Ошибка автозапуска",
+                message: result?.message ?? "Неизвестная ошибка",
+                type: "error",
+                duration: 5000,
+            });
+            return;
+        }
+
+        appSettings.autostart = Boolean(result.autostart);
+        syncAutostartButton();
+
+        showToast({
+            title: "Автозапуск обновлён",
+            message: appSettings.autostart
+                ? "ScriptHub будет запускаться вместе с Windows."
+                : "Автозапуск ScriptHub отключён.",
+            type: "success",
+            duration: 3200,
+        });
+    });
+}
 
 function openConfirm({
                          title = "Подтверждение",
@@ -246,6 +309,35 @@ function setFilesCount(count) {
     }
 }
 
+function formatLastLaunch(value) {
+    if (!value) {
+        return "Ещё не запускался";
+    }
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+        return "Дата недоступна";
+    }
+
+    return new Intl.DateTimeFormat("ru-RU", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+    }).format(date);
+}
+
+function createTileMeta(tool) {
+    return `
+        <div class="tile-meta">
+            <span class="tile-meta-item">Запусков: ${escapeHtml(tool.launch_count)}</span>
+            <span class="tile-meta-item">Последний запуск: ${escapeHtml(formatLastLaunch(tool.last_launch_at))}</span>
+        </div>
+    `;
+}
+
 function normalizeTool(tool) {
     return {
         id: tool?.id ?? "",
@@ -258,6 +350,7 @@ function normalizeTool(tool) {
         path: tool?.path ?? "",
         working_dir: tool?.working_dir ?? "",
         python_path: tool?.python_path ?? "",
+        last_launch_at: tool?.last_launch_at ?? null,
         launch_count: Number(tool?.launch_count ?? 0),
     };
 }
@@ -302,7 +395,7 @@ function createTileActions(tool) {
             >
                 Папка
             </button>
-
+            
             <button
                 class="tile-button"
                 type="button"
@@ -327,6 +420,8 @@ function createTileHtml(rawTool) {
 
             <h3>${escapeHtml(tool.name)}</h3>
             <p>${escapeHtml(tool.description)}</p>
+
+            ${createTileMeta(tool)}
 
             ${createTileActions(tool)}
         </article>
@@ -1074,7 +1169,6 @@ async function loadTools() {
     }
 }
 
-setupConfirmModal();
 setupWindowControls();
 setupModals();
 setupTileActions();
@@ -1082,5 +1176,7 @@ setupSearch();
 setupForms();
 setupFilters();
 setupGlobalHotkeys();
+setupAutostart();
 syncSearchFieldState();
 loadTools();
+loadAppSettings();

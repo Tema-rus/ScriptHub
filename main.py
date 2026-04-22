@@ -1,17 +1,54 @@
 from pathlib import Path
+from shutil import copyfile
+import os
 import subprocess
+import sys
 
 import webview
 
+from services.startup_service import StartupService
 from services.tool_service import ToolService
 from services.wireguard_service import WireGuardService
 
-BASE_DIR = Path(__file__).resolve().parent
-UI_DIR = BASE_DIR / "ui"
-DATA_DIR = BASE_DIR / "data"
+
+APP_NAME = "ScriptHub"
+
+IS_FROZEN = getattr(sys, "frozen", False)
+RESOURCE_BASE_DIR = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent))
+PROJECT_BASE_DIR = Path(sys.executable).resolve().parent if IS_FROZEN else Path(__file__).resolve().parent
+
+UI_DIR = RESOURCE_BASE_DIR / "ui"
+BUNDLED_DATA_DIR = RESOURCE_BASE_DIR / "data"
+
+APP_DATA_DIR = (
+    Path(os.environ["APPDATA"]) / APP_NAME
+    if IS_FROZEN
+    else PROJECT_BASE_DIR / "data"
+)
 
 INDEX_HTML_PATH = UI_DIR / "index.html"
-TOOLS_JSON_PATH = DATA_DIR / "tools.json"
+TOOLS_JSON_PATH = APP_DATA_DIR / "tools.json"
+TOOLS_EXAMPLE_PATH = BUNDLED_DATA_DIR / "tools.json"
+
+
+def ensure_app_data() -> None:
+    APP_DATA_DIR.mkdir(parents=True, exist_ok=True)
+
+    if TOOLS_JSON_PATH.exists():
+        return
+
+    if TOOLS_EXAMPLE_PATH.exists():
+        copyfile(TOOLS_EXAMPLE_PATH, TOOLS_JSON_PATH)
+        return
+
+    TOOLS_JSON_PATH.write_text("[]", encoding="utf-8")
+
+
+def build_launch_context() -> tuple[Path, list[str], Path]:
+    if IS_FROZEN:
+        return Path(sys.executable), [], Path(sys.executable).resolve().parent
+
+    return sys.executable and Path(sys.executable), [str(PROJECT_BASE_DIR / "main.py")], PROJECT_BASE_DIR
 
 
 class ScriptHubApi:
@@ -21,6 +58,14 @@ class ScriptHubApi:
 
         self._tool_service = ToolService(TOOLS_JSON_PATH)
         self._wireguard_service = WireGuardService()
+
+        launch_target, launch_arguments, working_dir = build_launch_context()
+        self._startup_service = StartupService(
+            app_name=APP_NAME,
+            target_path=launch_target,
+            arguments=launch_arguments,
+            working_dir=working_dir,
+        )
 
     def attach_window(self, window) -> None:
         self._window = window
@@ -34,7 +79,7 @@ class ScriptHubApi:
             return None
 
         result = self._window.create_file_dialog(
-            webview.FileDialog.OPEN,
+            webview.OPEN_DIALOG,
             allow_multiple=False,
             file_types=file_types,
         )
@@ -69,6 +114,29 @@ class ScriptHubApi:
         else:
             self._window.maximize()
             self._is_maximized = True
+
+    # ----------------------------
+    # App settings
+    # ----------------------------
+
+    def get_app_settings(self) -> dict:
+        return {
+            "autostart": self._startup_service.is_enabled(),
+        }
+
+    def set_autostart(self, enabled: bool) -> dict:
+        try:
+            self._startup_service.set_enabled(bool(enabled))
+            return {
+                "ok": True,
+                "autostart": self._startup_service.is_enabled(),
+                "message": "Автозапуск обновлён.",
+            }
+        except Exception as error:
+            return {
+                "ok": False,
+                "message": str(error),
+            }
 
     # ----------------------------
     # Tools API
@@ -197,6 +265,8 @@ class ScriptHubApi:
 
 
 def main() -> None:
+    ensure_app_data()
+
     api = ScriptHubApi()
 
     window = webview.create_window(

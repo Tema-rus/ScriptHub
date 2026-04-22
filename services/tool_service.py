@@ -1,3 +1,4 @@
+from datetime import datetime
 from pathlib import Path
 import json
 import os
@@ -166,6 +167,7 @@ class ToolService:
 
     def increment_launch_count(self, tool: dict, tools: list[dict]) -> None:
         tool["launch_count"] = int(tool.get("launch_count", 0)) + 1
+        tool["last_launch_at"] = datetime.now().isoformat(timespec="seconds")
         self.save_tools(tools)
 
     def run_tool(self, tool_id) -> dict:
