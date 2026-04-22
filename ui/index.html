@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ScriptHub</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="background-glow background-glow-left"></div>
+<div class="background-glow background-glow-right"></div>
+
+<main class="shell">
+    <section class="glass-panel">
+        <header class="topbar">
+            <div class="topbar-actions">
+                <button class="add-file-button" id="add-tool-button" type="button">Добавить файл</button>
+                <button class="add-file-button" id="wg-tool-button" type="button">VPN-команда</button>
+
+                <div class="search-toggle" id="search-toggle">
+                    <button
+                            class="search-toggle-button"
+                            id="search-toggle-button"
+                            type="button"
+                            aria-expanded="false"
+                            aria-controls="tools-search"
+                            aria-label="Открыть поиск"
+                    >
+                        <span class="search-icon" aria-hidden="true">
+                            <svg class="icon icon-search" viewBox="0 0 24 24" fill="none">
+                                <circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="1.8"></circle>
+                                <path d="M16 16L20 20" stroke="currentColor" stroke-width="1.8"
+                                      stroke-linecap="round"></path>
+                            </svg>
+                        </span>
+                    </button>
+
+                    <label class="search-inline-field" for="tools-search">
+                        <input
+                                id="tools-search"
+                                class="search-inline-input"
+                                type="search"
+                                placeholder="Поиск по проектам"
+                                autocomplete="off"
+                        >
+                    </label>
+                </div>
+            </div>
+
+            <div class="brand-block">
+                <p class="brand-kicker">project launcher</p>
+                <h1>ScriptHub</h1>
+            </div>
+        </header>
+
+        <div class="divider" aria-hidden="true"></div>
+
+        <section class="library" aria-labelledby="library-title">
+            <div class="library-heading">
+                <div class="library-filters" role="tablist" aria-label="Фильтры инструментов">
+                    <button class="library-filter-button is-active" type="button" data-filter="all">
+                        Все инструменты
+                    </button>
+                    <button class="library-filter-button" type="button" data-filter="favorite">
+                        Избранное
+                    </button>
+                    <button class="library-filter-button" type="button" data-filter="python">
+                        Python
+                    </button>
+                    <button class="library-filter-button" type="button" data-filter="exe">
+                        EXE
+                    </button>
+                </div>
+
+                <span id="files-count">0 файлов</span>
+            </div>
+
+            <div class="library-scroll">
+                <div class="tiles" id="tiles" aria-live="polite"></div>
+            </div>
+        </section>
+    </section>
+</main>
+
+<div class="modal-overlay" id="tool-modal" hidden>
+    <div class="modal-window">
+        <div class="modal-header">
+            <h3 id="tool-modal-title">Добавить инструмент</h3>
+            <button class="modal-close-button" type="button" data-close-modal="tool-modal" aria-label="Закрыть">
+                <svg class="icon icon-close" viewBox="0 0 24 24" fill="none">
+                    <path d="M8 8L16 16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
+                    <path d="M16 8L8 16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
+                </svg>
+            </button>
+        </div>
+
+        <form class="modal-form" id="tool-form">
+            <input type="hidden" id="tool-id">
+
+            <label class="modal-field">
+                <span>Название</span>
+                <input id="tool-name" type="text" required>
+            </label>
+
+            <label class="modal-field">
+                <span>Тип</span>
+                <select id="tool-type">
+                    <option value="python">python</option>
+                    <option value="exe">exe</option>
+                </select>
+            </label>
+
+            <label class="modal-field">
+                <span>Режим запуска</span>
+                <select id="tool-launch-mode">
+                    <option value="gui">gui</option>
+                    <option value="capture">capture</option>
+                    <option value="console">console</option>
+                </select>
+            </label>
+
+            <label class="modal-field">
+                <span>Путь к файлу</span>
+                <div class="modal-input-row">
+                    <input id="tool-path" type="text" required>
+                    <button class="tile-button" id="tool-pick-file-button" type="button">Выбрать</button>
+                </div>
+            </label>
+
+            <label class="modal-field">
+                <span>Рабочая папка</span>
+                <input id="tool-working-dir" type="text">
+            </label>
+
+            <label class="modal-field">
+                <span>Python path</span>
+                <div class="modal-input-row">
+                    <input id="tool-python-path" type="text">
+                    <button class="tile-button" id="tool-pick-python-button" type="button">Выбрать</button>
+                </div>
+            </label>
+
+            <label class="modal-field">
+                <span>Описание</span>
+                <textarea id="tool-description" rows="3"></textarea>
+            </label>
+
+            <label class="modal-field">
+                <span>Категория</span>
+                <input id="tool-category" type="text">
+            </label>
+
+            <label class="modal-checkbox">
+                <input id="tool-favorite" type="checkbox">
+                <span>Избранное</span>
+            </label>
+
+            <div class="modal-actions">
+                <button class="tile-button tile-button-primary" type="submit">Сохранить</button>
+                <button class="tile-button tile-button-danger" id="tool-delete-button" type="button" hidden>Удалить
+                </button>
+                <button class="tile-button" type="button" data-close-modal="tool-modal">Отмена</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="modal-overlay" id="wg-modal" hidden>
+    <div class="modal-window modal-window-wide">
+        <div class="modal-header">
+            <h3>Генератор VPN-команды</h3>
+            <button class="modal-close-button" type="button" data-close-modal="wg-modal" aria-label="Закрыть">
+                <svg class="icon icon-close" viewBox="0 0 24 24" fill="none">
+                    <path d="M8 8L16 16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
+                    <path d="M16 8L8 16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
+                </svg>
+            </button>
+        </div>
+        <label class="modal-field">
+            <span>Интерфейс</span>
+            <input id="wg-interface-name" type="text" value="Wireguard1" placeholder="Например: Wireguard1">
+        </label>
+        <div class="modal-form">
+            <label class="modal-field">
+                <span>Путь к конфигу</span>
+                <input id="wg-config-path" type="text" placeholder="Например: D:/Configs/wg.conf">
+            </label>
+
+            <div class="modal-actions">
+                <button class="tile-button" id="wg-pick-button" type="button">Выбрать файл</button>
+                <button class="tile-button tile-button-primary" id="wg-generate-button" type="button">Сгенерировать
+                </button>
+            </div>
+
+            <label class="modal-field">
+                <span>Результат</span>
+                <textarea id="wg-result" rows="8" readonly></textarea>
+            </label>
+
+            <div class="modal-actions">
+                <button class="tile-button" id="wg-clear-button" type="button">Очистить</button>
+                <button class="tile-button" id="wg-copy-button" type="button">Копировать</button>
+                <button class="tile-button" type="button" data-close-modal="wg-modal">Закрыть</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

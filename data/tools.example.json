@@ -1,0 +1,30 @@
+[
+    {
+        "id": 1,
+        "name": "Example Python Tool",
+        "type": "python",
+        "launch_mode": "gui",
+        "description": "Example Python-based tool.",
+        "favorite": true,
+        "launch_count": 0,
+        "category": "Examples",
+        "path": "D:/Path/To/Project/main.py",
+        "working_dir": "D:/Path/To/Project",
+        "python_path": "D:/Path/To/Project/.venv/Scripts/pythonw.exe",
+        "args": []
+    },
+    {
+        "id": 2,
+        "name": "Example EXE Tool",
+        "type": "exe",
+        "launch_mode": "gui",
+        "description": "Example executable tool.",
+        "favorite": false,
+        "launch_count": 0,
+        "category": "Examples",
+        "path": "C:/Path/To/App/App.exe",
+        "working_dir": "C:/Path/To/App",
+        "python_path": "",
+        "args": []
+    }
+]
