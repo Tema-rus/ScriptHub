@@ -11,84 +11,130 @@
 <div class="background-glow background-glow-right"></div>
 
 <main class="shell">
-    <section class="glass-panel">
-        <header class="topbar">
-            <div class="topbar-actions">
-                <button class="add-file-button" id="add-tool-button" type="button">Добавить файл</button>
-                <button class="add-file-button" id="wg-tool-button" type="button">VPN-команда</button>
-                <button class="add-file-button" id="autostart-button" type="button">Автозапуск: выкл</button>
-
-                <div class="search-toggle" id="search-toggle">
-                    <button
-                            class="search-toggle-button"
-                            id="search-toggle-button"
-                            type="button"
-                            aria-expanded="false"
-                            aria-controls="tools-search"
-                            aria-label="Открыть поиск"
-                    >
-                        <span class="search-icon" aria-hidden="true">
-                            <svg class="icon icon-search" viewBox="0 0 24 24" fill="none">
-                                <circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="1.8"></circle>
-                                <path d="M16 16L20 20" stroke="currentColor" stroke-width="1.8"
-                                      stroke-linecap="round"></path>
-                            </svg>
-                        </span>
+    <div class="shell-frame">
+        <section class="glass-panel">
+            <header class="topbar">
+                <div class="topbar-actions">
+                    <button class="add-file-button" id="add-tool-button" type="button">
+                        Добавить файл
                     </button>
 
-                    <label class="search-inline-field" for="tools-search">
-                        <input
-                                id="tools-search"
-                                class="search-inline-input"
-                                type="search"
-                                placeholder="Поиск по проектам"
-                                autocomplete="off"
+                    <button class="add-file-button" id="wg-tool-button" type="button">
+                        VPN-команда
+                    </button>
+
+                    <div class="system-menu">
+                        <button
+                                class="add-file-button system-menu-toggle"
+                                id="system-menu-toggle"
+                                type="button"
+                                aria-expanded="false"
+                                aria-controls="system-menu"
+                                aria-label="Открыть системное меню"
                         >
-                    </label>
+                            <span class="system-menu-dots" aria-hidden="true">···</span>
+                        </button>
+
+                        <div class="system-menu-panel" id="system-menu" hidden>
+                            <button class="system-menu-item" id="autostart-button" type="button">
+                                <span class="system-menu-item__label">Автозапуск</span>
+                                <span class="system-menu-item__value">Вкл</span>
+                            </button>
+
+                            <button class="system-menu-item" id="app-data-button" type="button">
+                                <span class="system-menu-item__label">Открыть папку данных</span>
+                            </button>
+
+                            <button class="system-menu-item" id="export-tools-button" type="button">
+                                <span class="system-menu-item__label">Экспорт конфигурации</span>
+                            </button>
+
+                            <button class="system-menu-item" id="import-tools-button" type="button">
+                                <span class="system-menu-item__label">Импорт конфигурации</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="search-toggle">
+                        <button
+                                class="search-toggle-button"
+                                id="search-toggle-button"
+                                type="button"
+                                aria-expanded="false"
+                                aria-controls="tools-search"
+                                aria-label="Открыть поиск"
+                        >
+                            <span class="search-icon" aria-hidden="true">
+                                <svg class="icon icon-search" viewBox="0 0 24 24" fill="none">
+                                    <circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="1.8"></circle>
+                                    <path d="M16 16L20 20" stroke="currentColor" stroke-width="1.8"
+                                          stroke-linecap="round"></path>
+                                </svg>
+                            </span>
+                        </button>
+
+                        <label class="search-inline-field" for="tools-search">
+                            <input
+                                    id="tools-search"
+                                    class="search-inline-input"
+                                    type="search"
+                                    placeholder="Поиск по проектам"
+                                    autocomplete="off"
+                            >
+                        </label>
+                    </div>
                 </div>
-            </div>
 
-            <div class="brand-block">
-                <p class="brand-kicker">project launcher</p>
-                <h1>ScriptHub</h1>
-            </div>
-        </header>
+                <div class="brand-block">
+                    <p class="brand-kicker">project launcher</p>
+                    <h1>ScriptHub</h1>
+                </div>
+            </header>
 
-        <div class="divider" aria-hidden="true"></div>
+            <div class="divider" aria-hidden="true"></div>
 
-        <section class="library" aria-labelledby="library-title">
-            <div class="library-heading">
-                <div class="library-filters" role="tablist" aria-label="Фильтры инструментов">
-                    <button class="library-filter-button is-active" type="button" data-filter="all">
-                        Все инструменты
-                    </button>
-                    <button class="library-filter-button" type="button" data-filter="favorite">
-                        Избранное
-                    </button>
-                    <button class="library-filter-button" type="button" data-filter="python">
-                        Python
-                    </button>
-                    <button class="library-filter-button" type="button" data-filter="exe">
-                        EXE
-                    </button>
+            <section class="library" aria-labelledby="library-filters-title">
+                <div class="library-heading">
+                    <div class="library-controls">
+                        <div class="select-shell library-filter-select-wrap">
+                            <select
+                                    id="library-filter-select"
+                                    class="form-select"
+                                    aria-label="Фильтр инструментов"
+                            >
+                                <option value="all">Все инструменты</option>
+                            </select>
+
+                            <span class="select-arrow" aria-hidden="true">
+                                <svg viewBox="0 0 20 20" fill="none">
+                                    <path d="M5 7.5L10 12.5L15 7.5"></path>
+                                </svg>
+                            </span>
+                        </div>
+                    </div>
+
+                    <span id="files-count">0 файлов</span>
                 </div>
 
-                <span id="files-count">0 файлов</span>
-            </div>
-
-            <div class="library-scroll">
-                <div class="tiles" id="tiles" aria-live="polite"></div>
-            </div>
+                <div class="library-scroll">
+                    <div class="tiles" id="tiles" aria-live="polite"></div>
+                </div>
+            </section>
         </section>
-    </section>
+    </div>
 </main>
 
 <div class="modal-overlay" id="tool-modal" hidden>
     <div class="modal-window">
         <div class="modal-header">
             <h3 id="tool-modal-title">Добавить инструмент</h3>
-            <button class="modal-close-button" type="button" data-close-modal="tool-modal" aria-label="Закрыть">
-                <svg class="icon icon-close" viewBox="0 0 24 24" fill="none">
+            <button
+                    class="modal-close-button"
+                    type="button"
+                    data-close-modal="tool-modal"
+                    aria-label="Закрыть"
+            >
+                <svg class="icon-close" viewBox="0 0 24 24" fill="none">
                     <path d="M8 8L16 16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
                     <path d="M16 8L8 16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
                 </svg>
@@ -105,26 +151,46 @@
 
             <label class="modal-field">
                 <span>Тип</span>
-                <select id="tool-type">
-                    <option value="python">python</option>
-                    <option value="exe">exe</option>
-                </select>
+                <div class="select-shell">
+                    <select id="tool-type" class="form-select">
+                        <option value="python">python</option>
+                        <option value="exe">exe</option>
+                        <option value="bat">bat / cmd</option>
+                        <option value="ps1">ps1</option>
+                    </select>
+
+                    <span class="select-arrow" aria-hidden="true">
+                        <svg viewBox="0 0 20 20" fill="none">
+                            <path d="M5 7.5L10 12.5L15 7.5"></path>
+                        </svg>
+                    </span>
+                </div>
             </label>
 
             <label class="modal-field">
                 <span>Режим запуска</span>
-                <select id="tool-launch-mode">
-                    <option value="gui">gui</option>
-                    <option value="capture">capture</option>
-                    <option value="console">console</option>
-                </select>
+                <div class="select-shell">
+                    <select id="tool-launch-mode" class="form-select">
+                        <option value="gui">gui</option>
+                        <option value="capture">capture</option>
+                        <option value="console">console</option>
+                    </select>
+
+                    <span class="select-arrow" aria-hidden="true">
+                        <svg viewBox="0 0 20 20" fill="none">
+                            <path d="M5 7.5L10 12.5L15 7.5"></path>
+                        </svg>
+                    </span>
+                </div>
             </label>
 
             <label class="modal-field">
                 <span>Путь к файлу</span>
                 <div class="modal-input-row">
                     <input id="tool-path" type="text" required>
-                    <button class="tile-button" id="tool-pick-file-button" type="button">Выбрать</button>
+                    <button class="tile-button" id="tool-pick-file-button" type="button">
+                        Выбрать
+                    </button>
                 </div>
             </label>
 
@@ -133,17 +199,26 @@
                 <input id="tool-working-dir" type="text">
             </label>
 
-            <label class="modal-field">
+            <label class="modal-field" id="tool-python-path-field">
                 <span>Python path</span>
                 <div class="modal-input-row">
                     <input id="tool-python-path" type="text">
-                    <button class="tile-button" id="tool-pick-python-button" type="button">Выбрать</button>
+                    <button class="tile-button" id="tool-pick-python-button" type="button">
+                        Выбрать
+                    </button>
                 </div>
             </label>
 
             <label class="modal-field">
+                <span>Аргументы запуска (по одному на строку)</span>
+                <textarea id="tool-args" rows="4" placeholder="Например:
+--debug
+config.json"></textarea>
+            </label>
+
+            <label class="modal-field">
                 <span>Описание</span>
-                <textarea id="tool-description" rows="3"></textarea>
+                <textarea id="tool-description" rows="4"></textarea>
             </label>
 
             <label class="modal-field">
@@ -157,10 +232,20 @@
             </label>
 
             <div class="modal-actions">
-                <button class="tile-button tile-button-primary" type="submit">Сохранить</button>
-                <button class="tile-button tile-button-danger" id="tool-delete-button" type="button" hidden>Удалить
+                <button class="tile-button tile-button-primary" type="submit">
+                    Сохранить
                 </button>
-                <button class="tile-button" type="button" data-close-modal="tool-modal">Отмена</button>
+                <button
+                        class="tile-button tile-button-danger"
+                        id="tool-delete-button"
+                        type="button"
+                        hidden
+                >
+                    Удалить
+                </button>
+                <button class="tile-button" type="button" data-close-modal="tool-modal">
+                    Отмена
+                </button>
             </div>
         </form>
     </div>
@@ -170,26 +255,47 @@
     <div class="modal-window modal-window-wide">
         <div class="modal-header">
             <h3>Генератор VPN-команды</h3>
-            <button class="modal-close-button" type="button" data-close-modal="wg-modal" aria-label="Закрыть">
-                <svg class="icon icon-close" viewBox="0 0 24 24" fill="none">
+            <button
+                    class="modal-close-button"
+                    type="button"
+                    data-close-modal="wg-modal"
+                    aria-label="Закрыть"
+            >
+                <svg class="icon-close" viewBox="0 0 24 24" fill="none">
                     <path d="M8 8L16 16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
                     <path d="M16 8L8 16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
                 </svg>
             </button>
         </div>
-        <label class="modal-field">
-            <span>Интерфейс</span>
-            <input id="wg-interface-name" type="text" value="Wireguard1" placeholder="Например: Wireguard1">
-        </label>
+
         <div class="modal-form">
             <label class="modal-field">
+                <span>Интерфейс</span>
+                <input
+                        id="wg-interface-name"
+                        type="text"
+                        value="Wireguard1"
+                        placeholder="Например: Wireguard1"
+                >
+            </label>
+
+            <label class="modal-field">
                 <span>Путь к конфигу</span>
-                <input id="wg-config-path" type="text" placeholder="Например: D:/Configs/wg.conf">
+                <div class="modal-input-row">
+                    <input
+                            id="wg-config-path"
+                            type="text"
+                            placeholder="Например: D:/Configs/wg.conf"
+                    >
+                    <button class="tile-button" id="wg-pick-button" type="button">
+                        Выбрать
+                    </button>
+                </div>
             </label>
 
             <div class="modal-actions">
-                <button class="tile-button" id="wg-pick-button" type="button">Выбрать файл</button>
-                <button class="tile-button tile-button-primary" id="wg-generate-button" type="button">Сгенерировать
+                <button class="tile-button tile-button-primary" id="wg-generate-button" type="button">
+                    Сгенерировать
                 </button>
             </div>
 
@@ -199,9 +305,15 @@
             </label>
 
             <div class="modal-actions">
-                <button class="tile-button" id="wg-clear-button" type="button">Очистить</button>
-                <button class="tile-button" id="wg-copy-button" type="button">Копировать</button>
-                <button class="tile-button" type="button" data-close-modal="wg-modal">Закрыть</button>
+                <button class="tile-button" id="wg-clear-button" type="button">
+                    Очистить
+                </button>
+                <button class="tile-button" id="wg-copy-button" type="button">
+                    Копировать
+                </button>
+                <button class="tile-button" type="button" data-close-modal="wg-modal">
+                    Закрыть
+                </button>
             </div>
         </div>
     </div>
@@ -211,7 +323,12 @@
     <div class="modal-window modal-window-confirm">
         <div class="modal-header">
             <h3 id="confirm-title">Подтверждение</h3>
-            <button class="modal-close-button" type="button" data-close-modal="confirm-modal" aria-label="Закрыть">
+            <button
+                    class="modal-close-button"
+                    type="button"
+                    data-close-modal="confirm-modal"
+                    aria-label="Закрыть"
+            >
                 <svg class="icon-close" viewBox="0 0 24 24" fill="none">
                     <path d="M8 8L16 16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
                     <path d="M16 8L8 16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
@@ -223,13 +340,17 @@
             <p id="confirm-message" class="confirm-message">Ты уверен?</p>
 
             <div class="modal-actions">
-                <button class="tile-button tile-button-danger" id="confirm-accept-button" type="button">Удалить</button>
-                <button class="tile-button" id="confirm-cancel-button" type="button">Отмена</button>
+                <button class="tile-button tile-button-danger" id="confirm-accept-button" type="button">
+                    Удалить
+                </button>
+                <button class="tile-button" id="confirm-cancel-button" type="button">
+                    Отмена
+                </button>
             </div>
         </div>
     </div>
 </div>
 
-<script src="app.js"></script>
+<script type="module" src="js/app.js"></script>
 </body>
 </html>

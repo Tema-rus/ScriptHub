@@ -1,13 +1,96 @@
-from datetime import datetime
 from pathlib import Path
+from datetime import datetime
 import json
 import os
+import shutil
 import subprocess
 
 
 class ToolService:
     def __init__(self, tools_json_path: Path):
         self._tools_json_path = tools_json_path
+
+    def enrich_tools(self, tools: list[dict]) -> list[dict]:
+        enriched = []
+
+        for raw_tool in tools:
+            tool = dict(raw_tool)
+
+            tool_type = str(tool.get("type", "")).lower()
+            path = Path(tool["path"]) if tool.get("path") else None
+            working_dir = Path(tool["working_dir"]) if tool.get("working_dir") else None
+            python_path = Path(tool["python_path"]) if tool.get("python_path") else None
+
+            path_exists = bool(path and path.exists())
+            working_dir_exists = bool(working_dir and working_dir.exists())
+
+            python_required = tool_type == "python"
+            python_path_exists = True if not python_required else bool(python_path and python_path.exists())
+
+            is_runnable = path_exists and working_dir_exists and python_path_exists
+
+            problems = []
+            if not path_exists:
+                problems.append("Файл инструмента не найден")
+            if not working_dir_exists:
+                problems.append("Рабочая папка не найдена")
+            if python_required and not python_path_exists:
+                problems.append("Python interpreter не найден")
+
+            tool["path_exists"] = path_exists
+            tool["working_dir_exists"] = working_dir_exists
+            tool["python_path_exists"] = python_path_exists
+            tool["is_runnable"] = is_runnable
+            tool["status_message"] = " · ".join(problems)
+
+            enriched.append(tool)
+
+        return enriched
+
+    def export_tools(self, destination_path: str) -> dict:
+        try:
+            src = self._tools_json_path
+            dst = Path(destination_path)
+
+            if not src.exists():
+                return {"ok": False, "message": "Локальный tools.json не найден."}
+
+            if dst.suffix.lower() != ".json":
+                dst = dst.with_suffix(".json")
+
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(src, dst)
+
+            return {"ok": True, "message": f"Конфигурация экспортирована: {dst}"}
+        except Exception as error:
+            return {"ok": False, "message": str(error)}
+
+    def import_tools(self, source_path: str) -> dict:
+        try:
+            src = Path(source_path)
+
+            if not src.exists():
+                return {"ok": False, "message": "Файл импорта не найден."}
+
+            with src.open("r", encoding="utf-8") as file:
+                data = json.load(file)
+
+            if not isinstance(data, list):
+                return {"ok": False, "message": "Импортируемый JSON должен содержать список инструментов."}
+
+            backup_path = self._tools_json_path.with_name("tools.backup.json")
+            if self._tools_json_path.exists():
+                shutil.copyfile(self._tools_json_path, backup_path)
+
+            self.save_tools(data)
+
+            return {
+                "ok": True,
+                "message": "Конфигурация импортирована.",
+                "backup_path": str(backup_path).replace("\\", "/") if backup_path.exists() else "",
+            }
+        except Exception as error:
+            return {"ok": False, "message": str(error)}
 
     def load_tools(self) -> list[dict]:
         if not self._tools_json_path.exists():
@@ -45,8 +128,8 @@ class ToolService:
         if not name:
             return None, "Укажи название инструмента."
 
-        if tool_type not in {"python", "exe"}:
-            return None, "Тип инструмента должен быть python или exe."
+        if tool_type not in {"python", "exe", "bat", "ps1"}:
+            return None, "Тип инструмента должен быть python, exe, bat или ps1."
 
         if launch_mode not in {"gui", "capture", "console"}:
             return None, "Режим запуска должен быть gui, capture или console."
@@ -147,6 +230,20 @@ class ToolService:
         if tool_type == "exe":
             return [str(tool_path), *args], None
 
+        if tool_type == "bat":
+            return ["cmd.exe", "/c", str(tool_path), *args], None
+
+        if tool_type == "ps1":
+            return [
+                "powershell.exe",
+                "-NoProfile",
+                "-ExecutionPolicy",
+                "Bypass",
+                "-File",
+                str(tool_path),
+                *args,
+            ], None
+
         return None, f"Неподдерживаемый тип инструмента: {tool_type}"
 
     def get_working_dir(self, tool: dict) -> tuple[Path | None, str | None]:
@@ -225,18 +322,44 @@ class ToolService:
                     "message": "Команда выполнена." if completed.returncode == 0 else "Команда завершилась с ошибкой."
                 }
 
-            if launch_mode == "console":
-                command_line = subprocess.list2cmdline(command)
+            tool_type = str(tool.get("type", "")).lower()
 
-                subprocess.Popen(
-                    ["cmd.exe", "/k", command_line],
-                    cwd=str(working_dir),
-                    shell=False
-                )
+            if launch_mode == "console":
+                if tool_type == "bat":
+                    subprocess.Popen(
+                        ["cmd.exe", "/k", str(Path(tool["path"])), *[str(arg) for arg in (tool.get("args") or [])]],
+                        cwd=str(working_dir),
+                        shell=False
+                    )
+                elif tool_type == "ps1":
+                    subprocess.Popen(
+                        [
+                            "powershell.exe",
+                            "-NoExit",
+                            "-ExecutionPolicy",
+                            "Bypass",
+                            "-File",
+                            str(Path(tool["path"])),
+                            *[str(arg) for arg in (tool.get("args") or [])],
+                        ],
+                        cwd=str(working_dir),
+                        shell=False
+                    )
+                else:
+                    command_line = subprocess.list2cmdline(command)
+
+                    subprocess.Popen(
+                        ["cmd.exe", "/k", command_line],
+                        cwd=str(working_dir),
+                        shell=False
+                    )
 
                 self.increment_launch_count(tool, tools)
-                return {"ok": True, "mode": "console",
-                        "message": f"Открыта консоль: {tool.get('name', 'Без названия')}"}
+                return {
+                    "ok": True,
+                    "mode": "console",
+                    "message": f"Открыта консоль: {tool.get('name', 'Без названия')}"
+                }
 
             return {"ok": False, "message": f"Неподдерживаемый launch_mode: {launch_mode}"}
 
